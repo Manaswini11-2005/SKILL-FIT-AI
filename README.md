@@ -1,77 +1,85 @@
-# SHL Assessment Recommendation System — Complete Walkthrough
+# SkillFit AI – RAG-Based Assessment Recommendation System
 
-This README takes you from setup to deployment. Follow the steps in order.
+SkillFit AI is an AI-powered conversational recommendation system that helps users identify suitable assessments based on job roles, required skills, experience levels, and hiring requirements.
 
-## 0. What's in this folder
+The application uses a conversational AI agent and retrieval-based recommendation to understand user requirements, ask clarification questions, retrieve relevant assessments, and generate personalized recommendations.
+
+This README covers project setup, configuration, testing, and deployment.
+
+## 1. Project Structure
 
 ```text
-shl-agent/
+SkillFit-AI/
 ├── app/
-│   ├── main.py        # FastAPI app: /health and /chat
-│   ├── agent.py       # Conversational AI logic for assessment recommendations
-│   └── retrieval.py   # TF-IDF retrieval over the SHL assessment catalog
+│   ├── main.py              # FastAPI application: /health and /chat
+│   ├── agent.py             # AI agent: clarification, recommendation, refinement and comparison
+│   └── retrieval.py         # Retrieval system for the assessment catalog
 ├── scraper/
-│   └── scrape_shl.py  # Scrapes the SHL catalog -> data/catalog.json
+│   └── scrape_catalog.py    # Scrapes assessment catalog data
 ├── data/
-│   └── catalog.json   # Seed catalog (20 sample assessments)
+│   └── catalog.json         # Assessment catalog
 ├── requirements.txt
-└── render.yaml        # Deployment configuration for Render
+└── render.yaml              # Render deployment configuration
 ```
 
-## 1. Project Overview
+**Note:** Rename the existing `scrape_shl.py` file to `scrape_catalog.py` and update any imports or references if necessary.
 
-The SHL Assessment Recommendation System is a conversational AI application that helps users identify suitable SHL assessments based on their hiring requirements.
+## 2. Key Features
 
-Users can describe a job role, required skills, experience level, and other relevant details through a chat interface. The system understands the requirements, asks follow-up questions when necessary, retrieves relevant assessments from the SHL catalog, and provides recommendations.
+- **Conversational AI:** Understands hiring requirements through natural-language conversations.
+- **Requirement Clarification:** Asks follow-up questions when important information is missing.
+- **RAG-Based Recommendations:** Uses retrieved assessment information to generate relevant recommendations.
+- **Assessment Retrieval:** Finds suitable assessments based on job roles, skills, and experience requirements.
+- **Recommendation Refinement:** Updates recommendations based on additional user input.
+- **Assessment Comparison:** Helps users compare recommended assessments.
+- **Intelligent Responses:** Handles incomplete or unsupported requests appropriately.
 
-### Key Features
+## 3. Technologies Used
 
-- Conversational interaction for collecting hiring requirements.
-- Clarification questions when information is incomplete.
-- AI-powered assessment recommendations based on job requirements.
-- Retrieval of relevant assessments using TF-IDF.
-- Refinement of recommendations based on additional user input.
-- Comparison of recommended assessments.
-- Handling of unsupported or irrelevant requests.
+- Python
+- FastAPI
+- Large Language Models (LLMs)
+- Retrieval-Augmented Generation (RAG)
+- Groq API
+- TF-IDF Retrieval
+- Natural Language Processing (NLP)
+- Requests and BeautifulSoup
+- Render
 
-## 2. Get a Free Groq API Key
+## 4. Configure the Groq API Key
 
 1. Visit https://console.groq.com and create an account.
 2. Generate an API key.
-3. Keep the key secure. It will be configured as an environment variable rather than hard-coded into the application.
+3. Store the key securely as an environment variable.
+4. Never hard-code the API key in the application.
 
-Groq provides fast LLM inference, which helps the application respond within the assessment's API time limits.
+Groq provides fast LLM inference, helping the application generate responses efficiently.
 
-## 3. Build the SHL Assessment Catalog
+## 5. Build the Assessment Catalog
 
-The existing `data/catalog.json` file contains approximately 20 sample assessments.
+The `data/catalog.json` file contains the assessment information used by the recommendation system.
 
-Before submitting, replace the sample catalog with actual SHL assessment data.
+The initial catalog contains approximately 20 sample assessments. Replace the sample data with the actual assessment catalog before final submission.
 
-Run:
+Run the scraper:
 
 ```bash
 cd scraper
 pip install requests beautifulsoup4
-python scrape_shl.py
+python scrape_catalog.py
 ```
 
-The scraper should generate the catalog at:
+After scraping, verify:
 
-```text
-data/catalog.json
-```
+1. Assessment names are accurate.
+2. Assessment URLs are valid and accessible.
+3. Assessment descriptions are correctly extracted.
+4. The catalog contains the required assessment categories.
+5. The generated JSON structure matches the format expected by the retrieval component.
 
-After scraping:
+If the scraper returns incomplete or incorrect results, inspect the source website and update the relevant CSS selectors in the scraping functions.
 
-1. Check whether assessment names and URLs are valid.
-2. Verify that the assessment URLs open correctly.
-3. Ensure the catalog contains Individual Test Solutions rather than Job Solutions.
-4. Check whether the descriptions and other assessment details were extracted correctly.
-
-If the scraper returns zero or incorrect results, inspect the SHL catalog page and update the CSS selectors in `parse_listing_page()` and `fetch_detail()` inside `scrape_shl.py`.
-
-## 4. Run the Application Locally
+## 6. Run the Application Locally
 
 Install the dependencies:
 
@@ -79,27 +87,27 @@ Install the dependencies:
 pip install -r requirements.txt
 ```
 
-Configure your Groq API key.
+Configure the API key.
 
-Windows PowerShell:
+**Windows PowerShell:**
 
 ```powershell
 $env:GROQ_API_KEY="your-key-here"
 ```
 
-Linux/macOS:
+**Linux/macOS:**
 
 ```bash
 export GROQ_API_KEY="your-key-here"
 ```
 
-Start the FastAPI application:
+Start the FastAPI server:
 
 ```bash
 uvicorn app.main:app --reload --port 8000
 ```
 
-### Test the Health Endpoint
+### Check Application Health
 
 ```bash
 curl http://localhost:8000/health
@@ -107,59 +115,57 @@ curl http://localhost:8000/health
 
 ### Test the Recommendation Endpoint
 
-Send a hiring requirement:
-
 ```bash
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
-  -d '{"messages":[{"role":"user","content":"Hiring a Java developer who works with stakeholders"}]}'
+  -d '{"messages":[{"role":"user","content":"I am hiring a Java developer who works with stakeholders"}]}'
 ```
 
-The system may ask a clarification question about the required experience level.
+If the requirements are incomplete, the conversational agent may ask a clarification question.
 
-Send the next message with the conversation history:
+For example, it may ask about the required experience level.
+
+Continue the conversation by including the previous messages:
 
 ```bash
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
   -d '{"messages":[
-        {"role":"user","content":"Hiring a Java developer who works with stakeholders"},
-        {"role":"assistant","content":"Got it — what seniority level are you targeting?"},
+        {"role":"user","content":"I am hiring a Java developer who works with stakeholders"},
+        {"role":"assistant","content":"What seniority level are you targeting?"},
         {"role":"user","content":"Mid-level, around 4 years"}
       ]}'
 ```
 
-The system uses the additional information to generate relevant assessment recommendations.
+The system processes the conversation and generates relevant assessment recommendations.
 
-## 5. Test the Recommendation System
+## 7. Evaluate the Recommendation System
 
-Use the 10 conversation traces provided with the assignment.
+Test the application using the provided conversation traces.
 
-1. Download the 10-trace ZIP file from Tania Goyal's email.
-2. Extract the ZIP file.
-3. Review each conversation trace, including its persona and expected assessment shortlist.
-4. Replay the user messages against the `/chat` endpoint in the correct order.
-5. Include the complete conversation history with each request.
-6. Compare the final recommendations with the expected assessment shortlist.
+1. Download and extract the test conversation ZIP file.
+2. Review each conversation and its expected assessment shortlist.
+3. Replay the user messages against the `/chat` endpoint.
+4. Include the complete conversation history with each request.
+5. Compare the generated recommendations with the expected results.
+6. Calculate Recall@10 to evaluate recommendation performance.
 
-Calculate Recall@10 to evaluate how many relevant assessments appear in the top 10 recommendations.
+Recall@10 measures how many relevant assessments are included in the top 10 recommendations.
 
-## 6. Deploy the Application Using Render
+## 8. Deploy Using Render
 
-### Step 1: Upload to GitHub
+### Step 1: Push the Project to GitHub
 
-Push the project folder to a new GitHub repository.
+Create a GitHub repository and push the complete project.
 
 ### Step 2: Create a Render Web Service
 
 1. Visit https://render.com.
 2. Select **New → Web Service**.
 3. Connect your GitHub repository.
-4. Select the repository containing the project.
+4. Select the project repository.
 
-### Step 3: Configure Deployment
-
-Use these commands if Render does not automatically detect the configuration.
+### Step 3: Configure Build and Start Commands
 
 **Build Command:**
 
@@ -173,9 +179,9 @@ pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port $PORT
 ```
 
-### Step 4: Configure Environment Variables
+### Step 4: Add Environment Variables
 
-Add the following environment variable in the Render dashboard:
+In the Render dashboard, add:
 
 ```text
 GROQ_API_KEY = your-groq-api-key
@@ -183,23 +189,27 @@ GROQ_API_KEY = your-groq-api-key
 
 ### Step 5: Deploy and Test
 
-After deployment, test the public application URL:
+Deploy the application and check the health endpoint:
 
 ```bash
 curl https://your-app.onrender.com/health
 ```
 
-Also test the `/chat` endpoint to verify that conversational assessment recommendations are working correctly.
+Test the `/chat` endpoint to verify that the conversational recommendation workflow is functioning correctly.
 
-Render's free tier may experience cold starts after inactivity, so allow time for the service to start.
+Note: Free hosting services may experience cold starts after periods of inactivity.
 
-## 7. Expected Project Workflow
+## 9. Application Workflow
 
-1. User enters hiring requirements through the chat interface.
-2. The AI agent understands the job role and required skills.
-3. The system asks clarification questions if important details are missing.
-4. The retrieval component searches the SHL assessment catalog.
-5. The system recommends relevant assessments.
-6. Users can refine or compare recommendations through further conversation.
+1. The user enters hiring requirements through the chat interface.
+2. The AI agent understands the job role, skills, and experience requirements.
+3. The agent asks clarification questions if additional information is needed.
+4. The retrieval component searches the assessment catalog.
+5. Relevant assessment information is used to generate recommendations.
+6. The user can refine or compare recommendations through further conversation.
 
-**Project Goal:** Build a conversational AI-powered recommendation system that helps hiring teams find suitable SHL assessments based on job roles, skills, and candidate requirements.
+## 10. Project Objective
+
+The objective of SkillFit AI is to simplify assessment selection through conversational AI and retrieval-based recommendations.
+
+It helps users identify relevant assessments efficiently by understanding hiring requirements and generating context-aware recommendations.
