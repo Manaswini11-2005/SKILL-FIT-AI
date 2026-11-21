@@ -114,27 +114,3 @@ Easiest free option: **Render**.
 Alternatives if Render gives you trouble: Railway, Fly.io, or Hugging Face Spaces (Docker SDK)
 all have similar free tiers — same `requirements.txt` and start command work on any of them.
 
-## 6. Write the approach document (2 pages max)
-
-I've drafted `APPROACH.md` for you — fill in the bracketed parts once you've actually run the
-scraper and tested against the traces (your real Recall@10 number, what selectors you had to
-fix, etc.) so it's accurate to what you actually built, not just a template. Convert it to PDF
-or keep as a doc per the submission form's accepted format.
-
-## 7. Submit
-
-Via the "Form" link in the email:
-- Public API endpoint URL (your Render URL).
-- The approach document.
-
-Double-check right before submitting: hit `/health` and `/chat` on the live URL one more time —
-free hosting tiers occasionally sleep or redeploy.
-
-## Common failure modes to double-check against (from the assignment's own warning list)
-
-- [ ] Does it break on a single confusing/contradictory message, or only work on the happy path?
-- [ ] Does `recommendations` stay an empty array on every clarify/refuse/compare response (not null)?
-- [ ] Does every returned URL exist in your scraped `catalog.json`, with zero exceptions?
-- [ ] Does it refuse off-topic and prompt-injection attempts without breaking the JSON schema?
-- [ ] Does it respect the 8-turn cap (the `main.py` here forces a shortlist on turn 8)?
-- [ ] Did you actually read the 10 trace files before testing, not just glance at them?
